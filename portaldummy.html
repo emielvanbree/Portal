@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Calibri:wght@400;700&family=Century+Gothic:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --just-grey: #3D434C;
+            --light-blue: #00B1E2;
+            --medium-grey: #666666;
+            --white: #ffffff;
+            --light-grey-bg: #F5F5F5;
+            --border-color: #ddd;
+        }
+
+        body {
+            font-family: 'Calibri', 'Century Gothic', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--light-grey-bg);
+            color: var(--just-grey);
+            line-height: 1.6;
+        }
+
+        .header {
+            background-color: var(--just-grey);
+            color: var(--white);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            box-sizing: border-box;
+            z-index: 1000;
+        }
+
+        .header .logo {
+            height: 40px; /* Adjust as needed */
+            width: auto;
+        }
+        
+        .header .logo img {
+            height: 100%;
+            filter: brightness(150%); /* Increases the brightness for a "whiter" look */
+        }
+
+        .header .user-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .header .user-info span {
+            margin-right: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .header .user-info .avatar {
+            width: 35px;
+            height: 35px;
+            background-color: var(--light-blue);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .sidebar {
+            display: none; /* Hidden by default for mobile */
+            position: fixed;
+            top: 60px; /* Below the header */
+            left: 0;
+            width: 100%;
+            background-color: var(--white);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 999;
+        }
+
+        .sidebar nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar nav ul li a {
+            display: block;
+            padding: 1rem;
+            color: var(--medium-grey);
+            text-decoration: none;
+            transition: background-color 0.3s, color 0.3s;
+            text-align: center;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .sidebar nav ul li a:hover,
+        .sidebar nav ul li a.active {
+            background-color: var(--light-blue);
+            color: var(--white);
+        }
+
+        .main-content {
+            padding: 1rem;
+            padding-top: 70px; /* Space for fixed header */
+        }
+        
+        /* Desktop styles */
+        @media (min-width: 768px) {
+            .header {
+                padding: 1rem 2rem;
+            }
+
+            .header .user-info span {
+                margin-right: 1rem;
+                font-size: 1rem;
+            }
+            
+            .header .user-info .avatar {
+                width: 40px;
+                height: 40px;
+            }
+
+            .sidebar {
+                display: block;
+                width: 250px;
+                height: calc(100vh - 70px);
+                position: fixed;
+                top: 70px;
+                left: 0;
+                padding: 1rem 0;
+                box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            }
+            
+            .sidebar nav ul li a {
+                text-align: left;
+                padding: 1rem 2rem;
+                border: none;
+            }
+
+            .main-content {
+                margin-left: 270px;
+                padding: 2rem;
+                padding-top: calc(2rem + 25px); /* Adjusted to move content down */
+            }
+        }
+        
+        .page-content {
+            display: none;
+        }
+
+        .page-content.active {
+            display: block;
+        }
+        
+        .dashboard-grid, .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        @media (min-width: 768px) {
+            .dashboard-grid, .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 2rem;
+                margin-top: 2rem;
+            }
+        }
+
+        .card {
+            background-color: var(--white);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-top: 5px solid var(--light-blue);
+        }
+
+        .card h3 {
+            margin-top: 0;
+            color: var(--just-grey);
+            font-size: 1.2rem;
+        }
+
+        .kpi-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--just-grey);
+        }
+
+        .kpi-label {
+            color: var(--medium-grey);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.8rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 150px;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 1.5rem;
+        }
+
+        .table-container table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table-container th,
+        .table-container td {
+            padding: 0.8rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+        
+        .table-container thead {
+            background-color: #f8f8f8;
+            color: var(--medium-grey);
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+
+        .table-container tbody tr:hover {
+            background-color: #f0f0f0;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s, color 0.3s;
+            font-family: 'Calibri', sans-serif;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background-color: var(--light-blue);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background-color: #0099d4;
+        }
+
+        .notification-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .notification-list li {
+            background-color: var(--light-grey-bg);
+            border-left: 4px solid var(--light-blue);
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        hr {
+            margin: 2rem 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        @media (min-width: 768px) {
+            .controls {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo">
+            <img src="salesupplylogo.png" alt="Salesupply Logo">
+        </div>
+        <div class="user-info">
+            <span>Welcome, John Doe</span>
+            <div class="avatar">JD</div>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <nav>
+            <ul>
+                <li><a href="#" data-page="dashboard" class="active">Dashboard</a></li>
+                <li><a href="#" data-page="order-management">Order Management</a></li>
+                <li><a href="#" data-page="returns">Returns</a></li>
+                <li><a href="#" data-page="customer-service">Customer Service</a></li>
+                <li><a href="#" data-page="invoicing">Invoicing</a></li>
+                <li><a href="#" data-page="reports">Reports</a></li>
+                <li><a href="#" data-page="account">Account</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <div id="dashboard" class="page-content active">
+            <h1>Dashboard</h1>
+            <p>Real-time insights into your operations.</p>
+            
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3>Open Orders</h3>
+                    <div class="kpi-value">123</div>
+                    <div class="kpi-label">Orders in processing</div>
+                    <div class="chart-container">
+                        <svg width="100%" height="100%" viewBox="0 0 100 100">
+                            <line x1="0" y1="100" x2="100" y2="20" stroke="var(--light-blue)" stroke-width="2" />
+                            <line x1="0" y1="100" x2="20" y2="80" stroke="var(--light-blue)" stroke-width="2" />
+                            <line x1="20" y1="80" x2="40" y2="50" stroke="var(--light-blue)" stroke-width="2" />
+                            <line x1="40" y1="50" x2="60" y2="70" stroke="var(--light-blue)" stroke-width="2" />
+                            <line x1="60" y1="70" x2="80" y2="40" stroke="var(--light-blue)" stroke-width="2" />
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Stock Alerts</h3>
+                    <ul class="notification-list">
+                        <li><strong>Product A:</strong> <span style="color: red;">Below minimum stock (25 units)</span></li>
+                        <li><strong>Product B:</strong> Stock nearly depleted (50 units)</li>
+                        <li><strong>Invoice #2025-09-01:</strong> Overdue since 3 days</li>
+                    </ul>
+                </div>
+                
+                <div class="card">
+                    <h3>SLA Performance</h3>
+                    <div class="kpi-value">98.5%</div>
+                    <div class="kpi-label">Order Accuracy (last 30 days)</div>
+                    <div class="chart-container">
+                        <svg width="100%" height="100%" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="40" fill="#f0f0f0" stroke="none" />
+                            <path d="M 50 50 L 50 10 A 40 40 0 1 1 51.5 9.7 Z" fill="var(--light-blue)" />
+                            <text x="50" y="55" font-size="12" text-anchor="middle" fill="var(--just-grey)">98.5%</text>
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Quick Actions</h3>
+                    <p>Click to start a task.</p>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="alert('New RMA form opened.');">New RMA</button>
+                        <button class="btn btn-primary" style="margin-left: 1rem;" onclick="alert('New purchase order opened.');">New PO</button>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+
+            <h2>Recent Orders</h2>
+            <div class="table-container">
+                <table id="recent-orders-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Status</th>
+                            <th>Date Shipped</th>
+                            <th>Carrier</th>
+                            <th>Total</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="order-management" class="page-content">
+            <h1>Order Management</h1>
+            <p>Full overview of all your orders.</p>
+            <div class="controls">
+                <input type="text" placeholder="Search by Order ID or customer..." style="width: 100%;">
+                <button class="btn btn-primary">Search</button>
+            </div>
+            <div class="table-container">
+                <table id="all-orders-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Customer</th>
+                            <th>Total</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="returns" class="page-content">
+            <h1>Returns Management</h1>
+            <p>Manage and track the status of all returns.</p>
+            <div class="controls">
+                <button class="btn btn-primary" onclick="alert('New return form opened. This would generate the RMA label.');">Initiate New Return</button>
+            </div>
+            <div class="table-container">
+                <table id="returns-table">
+                    <thead>
+                        <tr>
+                            <th>RMA ID</th>
+                            <th>Order ID</th>
+                            <th>Status</th>
+                            <th>Product</th>
+                            <th>Reason</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="customer-service" class="page-content">
+            <h1>Customer Service</h1>
+            <p>Overview of all tickets and customer interactions.</p>
+            <div class="controls">
+                <button class="btn btn-primary" onclick="alert('New ticket form opened. This would send an email to the Salesupply CS team.');">Create New Ticket</button>
+            </div>
+            <h2>Open Tickets</h2>
+            <div class="table-container">
+                <table id="tickets-table">
+                    <thead>
+                        <tr>
+                            <th>Ticket ID</th>
+                            <th>Subject</th>
+                            <th>Status</th>
+                            <th>Date Opened</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <hr>
+            <h2>Self-service Knowledge Base</h2>
+            <p>Search our knowledge base for answers to common questions.</p>
+            <input type="text" placeholder="Search a topic..." style="width: 100%;">
+        </div>
+
+        <div id="invoicing" class="page-content">
+            <h1>Invoicing & Finance</h1>
+            <p>View and download all your invoices and credit notes.</p>
+            <div class="table-container">
+                <table id="invoices-table">
+                    <thead>
+                        <tr>
+                            <th>Invoice #</th>
+                            <th>Date</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                            <th>Amount</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div id="reports" class="page-content">
+            <h1>Reports & KPIs</h1>
+            <p>Insights into your logistics performance.</p>
+            <div class="stats-grid">
+                <div class="card">
+                    <h3>Order Accuracy</h3>
+                    <div class="kpi-value">99.2%</div>
+                    <div class="kpi-label">Correctly shipped orders</div>
+                </div>
+                <div class="card">
+                    <h3>Return Rate</h3>
+                    <div class="kpi-value">3.5%</div>
+                    <div class="kpi-label">Returns vs. total orders</div>
+                </div>
+                <div class="card">
+                    <h3>Inventory Turnover</h3>
+                    <div class="kpi-value">25 days</div>
+                    <div class="kpi-label">Avg. time in warehouse</div>
+                </div>
+            </div>
+            <hr>
+            <h2>Visualizations</h2>
+            <div class="chart-container" style="height: 300px;">
+                <p style="text-align: center; color: var(--medium-grey);">This is where a chart would go, e.g., monthly order volumes.</p>
+            </div>
+        </div>
+
+        <div id="account" class="page-content">
+            <h1>My Account</h1>
+            <p>Manage your profile, users, and preferences.</p>
+            <div class="card">
+                <h3>Profile Information</h3>
+                <div class="form-group">
+                    <label>Company Name:</label>
+                    <input type="text" value="Customer Inc." disabled>
+                </div>
+                <div class="form-group">
+                    <label>Contact Person:</label>
+                    <input type="text" value="John Doe">
+                </div>
+                <div class="form-group">
+                    <label>Email Address:</label>
+                    <input type="email" value="contact@customer.com">
+                </div>
+                <button class="btn btn-primary" onclick="alert('Profile information saved.');">Save</button>
+            </div>
+            <hr>
+            <div class="card">
+                <h3>Notification Settings</h3>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" checked> Receive notifications by email
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" checked> Order delayed
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox"> Stock below minimum
+                    </label>
+                </div>
+                <button class="btn btn-primary" onclick="alert('Notification settings saved.');">Save</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navLinks = document.querySelectorAll('.sidebar nav ul li a');
+            const pages = document.querySelectorAll('.page-content');
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    navLinks.forEach(nav => nav.classList.remove('active'));
+                    pages.forEach(page => page.classList.remove('active'));
+
+                    e.target.classList.add('active');
+
+                    const targetPageId = e.target.dataset.page;
+                    document.getElementById(targetPageId).classList.add('active');
+                });
+            });
+
+            // Mockup Data
+            const recentOrders = [
+                { id: '#4523-234', status: 'Shipped', date: '16-09-2025', carrier: 'DHL', total: '€ 125.50' },
+                { id: '#4523-235', status: 'Processing', date: '-', carrier: '-', total: '€ 89.95' },
+                { id: '#4523-236', status: 'Cancelled', date: '-', carrier: '-', total: '€ 240.00' },
+                { id: '#4523-237', status: 'Shipped', date: '15-09-2025', carrier: 'PostNL', total: '€ 54.20' }
+            ];
+
+            const allOrders = [
+                { id: '#4523-234', date: '16-09-2025', status: 'Shipped', customer: 'Customer A', total: '€ 125.50' },
+                { id: '#4523-235', date: '16-09-2025', status: 'Processing', customer: 'Customer B', total: '€ 89.95' },
+                { id: '#4523-236', date: '15-09-2025', status: 'Cancelled', customer: 'Customer C', total: '€ 240.00' },
+                { id: '#4523-237', date: '15-09-2025', status: 'Shipped', customer: 'Customer A', total: '€ 54.20' },
+                { id: '#4523-238', date: '14-09-2025', status: 'Shipped', customer: 'Customer B', total: '€ 310.00' }
+            ];
+
+            const returns = [
+                { id: 'RMA-9001', orderId: '#4523-237', status: 'Processed', product: 'Black T-shirt', reason: 'Too small' },
+                { id: 'RMA-9002', orderId: '#4523-238', status: 'Received', product: 'Headphones', reason: 'Damaged' },
+            ];
+
+            const tickets = [
+                { id: 'CS-445', subject: 'Issue with tracking', status: 'Open', date: '17-09-2025' },
+                { id: 'CS-444', subject: 'Wrong product delivered', status: 'Closed', date: '16-09-2025' },
+            ];
+
+            const invoices = [
+                { id: 'F-2025-001', date: '01-09-2025', dueDate: '30-09-2025', status: 'Open', amount: '€ 1,560.00' },
+                { id: 'F-2025-002', date: '01-08-2025', dueDate: '30-08-2025', status: 'Paid', amount: '€ 1,220.00' },
+                { id: 'F-2025-003', date: '01-07-2025', dueDate: '30-07-2025', status: 'Overdue', amount: '€ 850.50' },
+            ];
+
+            function populateTable(tableId, data, type) {
+                const tableBody = document.querySelector(`#${tableId} tbody`);
+                if (!tableBody) return;
+                tableBody.innerHTML = '';
+                data.forEach(item => {
+                    let row = `<tr>`;
+                    if (type === 'orders' || type === 'all-orders') {
+                        let statusColor = 'black';
+                        if (item.status === 'Shipped') statusColor = 'green';
+                        if (item.status === 'Processing') statusColor = 'orange';
+                        if (item.status === 'Cancelled') statusColor = 'red';
+                        row += `
+                            <td>${item.id}</td>
+                            <td><span style="color: ${statusColor};">${item.status}</span></td>
+                            <td>${item.date}</td>
+                            <td>${item.carrier || item.customer}</td>
+                            <td>${item.total}</td>
+                            <td><a href="#" style="color: var(--light-blue);" onclick="alert('View details for order ${item.id}');">View</a></td>
+                        `;
+                    } else if (type === 'returns') {
+                        let statusColor = 'black';
+                        if (item.status === 'Processed') statusColor = 'green';
+                        if (item.status === 'Received') statusColor = 'orange';
+                        row += `
+                            <td>${item.id}</td>
+                            <td>${item.orderId}</td>
+                            <td><span style="color: ${statusColor};">${item.status}</span></td>
+                            <td>${item.product}</td>
+                            <td>${item.reason}</td>
+                            <td><a href="#" style="color: var(--light-blue);" onclick="alert('View details for RMA ${item.id}');">View</a></td>
+                        `;
+                    } else if (type === 'tickets') {
+                        let statusColor = 'black';
+                        if (item.status === 'Open') statusColor = 'red';
+                        if (item.status === 'Closed') statusColor = 'green';
+                        row += `
+                            <td>${item.id}</td>
+                            <td>${item.subject}</td>
+                            <td><span style="color: ${statusColor};">${item.status}</span></td>
+                            <td>${item.date}</td>
+                            <td><a href="#" style="color: var(--light-blue);" onclick="alert('View ticket ${item.id} and add comments.');">View</a></td>
+                        `;
+                    } else if (type === 'invoices') {
+                        let statusColor = 'black';
+                        if (item.status === 'Paid') statusColor = 'green';
+                        if (item.status === 'Open') statusColor = 'orange';
+                        if (item.status === 'Overdue') statusColor = 'red';
+                        row += `
+                            <td>${item.id}</td>
+                            <td>${item.date}</td>
+                            <td>${item.dueDate}</td>
+                            <td><span style="color: ${statusColor};">${item.status}</span></td>
+                            <td>${item.amount}</td>
+                            <td><a href="#" style="color: var(--light-blue);" onclick="alert('Downloading invoice ${item.id}');">Download</a></td>
+                        `;
+                    }
+                    row += `</tr>`;
+                    tableBody.innerHTML += row;
+                });
+            }
+
+            populateTable('recent-orders-table', recentOrders, 'orders');
+            populateTable('all-orders-table', allOrders, 'all-orders');
+            populateTable('returns-table', returns, 'returns');
+            populateTable('tickets-table', tickets, 'tickets');
+            populateTable('invoices-table', invoices, 'invoices');
+        });
+    </script>
+</body>
+</html>
